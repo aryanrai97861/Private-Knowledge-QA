@@ -1,4 +1,5 @@
 import { ChromaClient, CloudClient, Collection } from 'chromadb';
+import { DefaultEmbeddingFunction } from '@chroma-core/default-embed';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '../.env' });
@@ -7,10 +8,6 @@ const COLLECTION_NAME = 'document_chunks';
 
 let client: ChromaClient;
 let collection: Collection;
-
-function isCloudMode(): boolean {
-  return !!process.env.CHROMA_API_KEY;
-}
 
 function createClient(): ChromaClient {
   const apiKey = process.env.CHROMA_API_KEY;
@@ -35,24 +32,14 @@ function createClient(): ChromaClient {
 export async function initChroma(): Promise<void> {
   client = createClient();
 
-  if (isCloudMode()) {
-    // In Cloud mode, use the cloud embedding function
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ChromaCloudQwenEmbeddingFunction } = require('@chroma-core/chroma-cloud-qwen') as any;
-    const embeddingFunction = new ChromaCloudQwenEmbeddingFunction({
-      apiKey: process.env.CHROMA_API_KEY!,
-    });
-    collection = await client.getOrCreateCollection({
-      name: COLLECTION_NAME,
-      embeddingFunction,
-    });
-  } else {
-    // Local mode — use default embedding
-    collection = await client.getOrCreateCollection({
-      name: COLLECTION_NAME,
-      metadata: { 'hnsw:space': 'cosine' },
-    });
-  }
+  // Use DefaultEmbeddingFunction (local ONNX model, no API key needed)
+  const embeddingFunction = new DefaultEmbeddingFunction();
+
+  collection = await client.getOrCreateCollection({
+    name: COLLECTION_NAME,
+    embeddingFunction,
+    metadata: { 'hnsw:space': 'cosine' },
+  });
 
   console.log('✅ ChromaDB collection initialized');
 }
