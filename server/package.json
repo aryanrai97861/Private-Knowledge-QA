@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@chroma-core/chroma-cloud-qwen": "^0.1.10",
     "@chroma-core/default-embed": "^0.1.9",
     "@google/genai": "^1.41.0",
     "chromadb": "^3.3.0",
